@@ -3,7 +3,7 @@ name: Build
 on: [push]
 
 env:
-  TOOLCHAIN: default
+  TOOLCHAIN: proton
   INSTALLER: yes
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        model: [ "G970F,G973F,G975F", "N970F,N975F" ]
+        model: [ "N971N" ]
 
     steps:
       - uses: actions/checkout@v2
@@ -54,6 +54,16 @@ jobs:
         if: env.TOOLCHAIN != 'system-gcc' && env.TOOLCHAIN != 'system-clang'
         run: git clone --depth 1 -j $(nproc) --branch $TOOLCHAIN --single-branch https://github.com/CruelKernel/samsung-exynos9820-toolchain toolchain
 
+      - name: Enable KVM
+        run: |
+          for file in $(find -name 'exynos9820*_defconfig'); do
+            echo "Modifying $file ..."
+            echo >> "$file"
+            echo 'CONFIG_VIRTUALIZATION=y' >> "$file"
+            echo 'CONFIG_KVM=y' >> "$file"
+            echo 'CONFIG_KVM_MMIO=y' >> "$file"
+            echo 'CONFIG_KVM_ARM_HOST=y' >> "$file"
+          done
       - name: Kernel Build
         run: ./cruelbuild :build
 
